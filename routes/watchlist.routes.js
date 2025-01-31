@@ -3,10 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth.middleware');
 const User = require('../models/userModel');
 
-// Apply auth middleware to all routes
-router.use(authMiddleware);
-
-// Get user's watchlist
+// No need to add authMiddleware here as it's added in server.js
 router.get('/', async (req, res) => {
   try {
     const userId = req.userId;
@@ -39,43 +36,56 @@ router.post('/', async (req, res) => {
     const { symbol, companyName, currentPrice, profitLoss } = req.body;
     const userId = req.userId;
 
+    console.log('Adding to watchlist:', { symbol, companyName, currentPrice, profitLoss });
+
+    // Validate required fields
+    if (!symbol || !companyName || currentPrice === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields'
+      });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
       });
     }
 
+    // Check if stock already exists in watchlist
     const stockExists = user.watchlist.some(stock => stock.symbol === symbol);
     if (stockExists) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Stock already in watchlist' 
+      return res.status(400).json({
+        success: false,
+        message: 'Stock already in watchlist'
       });
     }
 
+    // Add to watchlist
     user.watchlist.push({
       symbol,
       companyName,
       currentPrice,
-      profitLoss
+      profitLoss: profitLoss || 0,
+      addedAt: new Date()
     });
 
     await user.save();
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Stock added to watchlist',
-      watchlist: user.watchlist 
+      watchlist: user.watchlist
     });
 
   } catch (error) {
     console.error('Watchlist add error:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to add stock to watchlist',
-      error: error.message 
+      error: error.message
     });
   }
 });

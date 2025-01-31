@@ -76,6 +76,7 @@ const authController = {
     googleAuth: async (req, res) => {
         try {
             const { token } = req.body;
+            console.log('Received token:', token);
             
             const ticket = await client.verifyIdToken({
                 idToken: token,

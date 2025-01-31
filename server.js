@@ -70,12 +70,20 @@ const startServer = async () => {
     app.use('/api/auth', authRoutes);
 
     // Protected routes
-    app.use('/api/stocks', authMiddleware, stockRoutes);
+    app.use('/api/stocks', stockRoutes);
     app.use('/api/profile', authMiddleware, profileRoutes);
-    app.use('/api/watchlist', watchlistRoutes);
+    app.use('/api/watchlist', authMiddleware, watchlistRoutes);
 
-    // Auth routes
-    app.post('/api/auth/google', authController.googleAuth);
+    // Add debug logging for all routes
+    app.use((req, res, next) => {
+      console.log('Request:', {
+        method: req.method,
+        path: req.path,
+        body: req.body,
+        headers: req.headers
+      });
+      next();
+    });
 
     // Health check endpoint
     app.get('/health', (req, res) => {

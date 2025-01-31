@@ -1,77 +1,55 @@
-const axios = require('axios');
+const yahooFinance = require('yahoo-finance2').default;
 
-// Utility function to validate stock symbol
-const validateSymbol = (symbol) => {
-  symbol = symbol.trim().toUpperCase();
-  return /^[A-Z]{1,5}$/.test(symbol) ? symbol : null;
-};
+const stockController = {
+  getStockData: async (req, res) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      console.log(`Fetching stock data for ${symbol}`);
 
-const getStockHistory = async (req, res) => {
-  try {
-    let { symbol } = req.params;
-    symbol = validateSymbol(symbol);
-    
-    if (!symbol) {
-      return res.status(400).json({ error: 'Invalid stock symbol' });
-    }
+      // Calculate date 30 days ago
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const response = await axios.get(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`,
-      {
-        params: {
-          interval: '1d',
-          range: '1mo'
+      const [quote, historical] = await Promise.all([
+        yahooFinance.quote(symbol),
+        yahooFinance.historical(symbol, {
+          period1: thirtyDaysAgo,
+          period2: new Date(),
+          interval: '1d'
+        })
+      ]);
+
+      if (!quote) {
+        return res.status(404).json({ 
+          success: false,
+          message: 'Stock not found' 
+        });
+      }
+
+      const stockData = {
+        symbol,
+        currentData: {
+          price: quote.regularMarketPrice,
+          change: quote.regularMarketChange,
+          changePercent: quote.regularMarketChangePercent,
+          companyName: quote.shortName || quote.longName
         },
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-        }
-      }
-    );
+        historicalData: historical.map(day => ({
+          date: day.date.toISOString().split('T')[0],
+          close: day.close
+        }))
+      };
 
-    // Send raw data for debugging
-    console.log('Yahoo Finance Response:', response.data);
-    
-    if (!response.data?.chart?.result?.[0]) {
-      return res.status(404).json({ error: 'No data found for symbol' });
+      res.json(stockData);
+    } catch (error) {
+      console.error('Stock API Error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to fetch stock data',
+        error: error.message 
+      });
     }
-
-    res.json(response.data);
-  } catch (error) {
-    console.error('Error fetching stock data:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch stock data',
-      details: error.message 
-    });
   }
 };
 
-const getStockQuote = async (req, res) => {
-  try {
-    let { symbol } = req.params;
-    symbol = validateSymbol(symbol);
-
-    if (!symbol) {
-      return res.status(400).json({ error: 'Invalid stock symbol' });
-    }
-
-    const response = await axios.get(
-      `https://query1.finance.yahoo.com/v8/finance/quote`,
-      {
-        params: { symbols: symbol },
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-        }
-      }
-    );
-
-    res.json(response.data);
-  } catch (error) {
-    console.error('Error fetching stock quote:', error.message);
-    res.status(500).json({ error: 'Failed to fetch stock quote' });
-  }
-};
-
-module.exports = {
-  getStockHistory,
-  getStockQuote
-};
+module.exports = stockController;
