@@ -17,23 +17,22 @@ const port = process.env.PORT || 5000;
 connectDB().then(() => {
   // CORS configuration
   app.use(cors({
-    origin: ['https://stock-pro-frontend-one.vercel.app', 'http://localhost:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin'],
+    origin: "https://stock-pro-frontend-one.vercel.app",  // Single origin
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-    exposedHeaders: ['Authorization'],
-    maxAge: 86400 // Cache preflight requests for 24 hours
+    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
   }));
 
-  // Add OPTIONS handling for preflight requests
+  // Pre-flight requests
   app.options('*', cors());
 
   app.use(express.json());
-  app.use(morgan('dev')); // Add logging
+  app.use(morgan('dev'));
 
-  // Debug middleware for all requests
+  // Debug middleware
   app.use((req, res, next) => {
     console.log(`${req.method} ${req.url}`, {
+      origin: req.headers.origin,
       body: req.body,
       headers: req.headers
     });
@@ -59,9 +58,13 @@ connectDB().then(() => {
   app.use('/api/profile', authMiddleware, profileRoutes);
   app.use('/api/watchlist', authMiddleware, watchlistRoutes);
 
-  // Add a test route at the root level
+  // Test route
   app.get('/test', (req, res) => {
-    res.json({ message: 'Backend is working' });
+    res.json({ 
+      message: 'Backend is working',
+      cors: true,
+      origin: req.headers.origin 
+    });
   });
 
   // Health check endpoint
@@ -87,7 +90,7 @@ connectDB().then(() => {
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log(`Allowed origins: ${['https://stock-pro-frontend-one.vercel.app', 'http://localhost:5173']}`);
+    console.log(`Allowed origins: ${"https://stock-pro-frontend-one.vercel.app"}`);
   });
 }).catch(err => {
   console.error('Failed to connect to MongoDB:', err);
