@@ -36,11 +36,12 @@ connectDB().then(() => {
     next();
   });
 
-  // Add debug logging middleware for auth routes
+  // Debug middleware for auth routes - place this before route mounting
   app.use('/api/auth', (req, res, next) => {
     console.log('Auth Route Request:', {
       method: req.method,
       path: req.path,
+      url: req.url,
       headers: req.headers,
       body: req.body,
       query: req.query
@@ -48,13 +49,16 @@ connectDB().then(() => {
     next();
   });
 
-  // Routes that don't need authentication
+  // Mount routes
   app.use('/api/auth', authRoutes);
-
-  // Protected routes
   app.use('/api/stocks', authMiddleware, stockRoutes);
   app.use('/api/profile', authMiddleware, profileRoutes);
   app.use('/api/watchlist', authMiddleware, watchlistRoutes);
+
+  // Add a test route at the root level
+  app.get('/test', (req, res) => {
+    res.json({ message: 'Backend is working' });
+  });
 
   // Health check endpoint
   app.get('/health', (req, res) => {
