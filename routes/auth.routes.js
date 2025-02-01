@@ -8,15 +8,15 @@ const authMiddleware = require('../middleware/auth.middleware');
  * Handles all authentication-related endpoints
  */
 
-// Test route to verify the endpoint is working
-router.get('/google', (req, res) => {
-  res.json({ message: "Google Auth endpoint is working" });
+// Test endpoint
+router.get('/test', (req, res) => {
+  res.json({ message: 'Auth routes working' });
 });
 
-// Google OAuth authentication endpoint
+// Google OAuth endpoint - this is the only endpoint needed for client-side flow
 router.post('/google', authController.googleAuth);
 
-// Token verification endpoint
+// Token verification
 router.get('/verify', authMiddleware, authController.verifyToken);
 
 // Other auth routes
