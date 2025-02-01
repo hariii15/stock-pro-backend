@@ -56,9 +56,6 @@ connectDB().then(() => {
   app.use('/api/profile', authMiddleware, profileRoutes);
   app.use('/api/watchlist', authMiddleware, watchlistRoutes);
 
-  // Auth routes
-  app.post('/api/auth/google', authController.googleAuth); // Add /api prefix
-
   // Health check endpoint
   app.get('/health', (req, res) => {
     res.json({ status: 'ok', environment: process.env.NODE_ENV });

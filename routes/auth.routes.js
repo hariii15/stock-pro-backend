@@ -8,9 +8,6 @@ const authMiddleware = require('../middleware/auth.middleware');
  * Handles all authentication-related endpoints
  */
 
-// Initial redirect route
-router.get('/', authController.initialRedirect);
-
 // User registration endpoint
 router.post('/register', authController.register);
 
@@ -18,7 +15,7 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 
 // Google OAuth authentication endpoint
-router.post('/google', authController.googleAuth);
+router.post('/google-login', authController.googleAuth);
 
 // Token verification endpoint
 router.get('/verify', authMiddleware, authController.verifyToken);

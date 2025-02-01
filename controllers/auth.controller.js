@@ -75,25 +75,28 @@ const authController = {
      */
     googleAuth: async (req, res) => {
         try {
-            const { token } = req.body;
-            console.log('Received token:', token);
+            const { token, userData } = req.body;
             
-            const ticket = await client.verifyIdToken({
-                idToken: token,
-                audience: process.env.GOOGLE_CLIENT_ID
-            });
-
-            const { email, name, picture } = ticket.getPayload();
-
-            let user = await User.findOne({ email });
-            if (!user) {
-                user = await User.create({
-                    email,
-                    name,
-                    picture
+            if (!userData || !userData.email) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid user data'
                 });
             }
 
+            let user = await User.findOne({ email: userData.email });
+            
+            if (!user) {
+                // Create new user if doesn't exist
+                user = await User.create({
+                    email: userData.email,
+                    name: userData.name,
+                    googleId: userData.googleId,
+                    picture: userData.picture
+                });
+            }
+
+            // Generate JWT token
             const jwtToken = jwt.sign(
                 { userId: user._id },
                 process.env.JWT_SECRET,
