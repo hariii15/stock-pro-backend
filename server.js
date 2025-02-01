@@ -17,12 +17,16 @@ const port = process.env.PORT || 5000;
 connectDB().then(() => {
   // CORS configuration
   app.use(cors({
-    origin: ['https://stock-pro-frontend-one.vercel.app', 'http://localhost:5173'], // Allow both deployed and local frontend
+    origin: ['https://stock-pro-frontend-one.vercel.app', 'http://localhost:5173'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin'],
     credentials: true,
-    exposedHeaders: ['Authorization']
+    exposedHeaders: ['Authorization'],
+    maxAge: 86400 // Cache preflight requests for 24 hours
   }));
+
+  // Add OPTIONS handling for preflight requests
+  app.options('*', cors());
 
   app.use(express.json());
   app.use(morgan('dev')); // Add logging
