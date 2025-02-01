@@ -17,10 +17,11 @@ const port = process.env.PORT || 5000;
 connectDB().then(() => {
   // CORS configuration
   app.use(cors({
-    origin: 'http://localhost:5174',
+    origin: ['https://stock-pro-frontend-one.vercel.app', 'http://localhost:5173'], // Allow both deployed and local frontend
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    credentials: true,
+    exposedHeaders: ['Authorization']
   }));
 
   app.use(express.json());
@@ -32,18 +33,6 @@ connectDB().then(() => {
       body: req.body,
       headers: req.headers
     });
-    next();
-  });
-
-  // Add response headers middleware
-  app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Credentials', 'true');
-    next();
-  });
-
-  // Add this before your route definitions
-  app.use((req, res, next) => {
-    res.header('Access-Control-Expose-Headers', 'Authorization');
     next();
   });
 
@@ -72,7 +61,7 @@ connectDB().then(() => {
 
   // Health check endpoint
   app.get('/health', (req, res) => {
-    res.json({ status: 'ok' });
+    res.json({ status: 'ok', environment: process.env.NODE_ENV });
   });
 
   // Error handling middleware
@@ -92,6 +81,8 @@ connectDB().then(() => {
 
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`Allowed origins: ${['https://stock-pro-frontend-one.vercel.app', 'http://localhost:5173']}`);
   });
 }).catch(err => {
   console.error('Failed to connect to MongoDB:', err);
